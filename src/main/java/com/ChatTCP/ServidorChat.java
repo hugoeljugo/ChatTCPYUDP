@@ -1,24 +1,73 @@
 package com.ChatTCP;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class ServidorChat {
-    private static final int PUERTO = 9999;
+    private static final String URL = "jdbc:sqlite:myDatabase.db";
 
-    public static void main(String[] args) throws IOException {
-        ServerSocket servidor = new ServerSocket(PUERTO);
+    public static boolean verificarLogin(String username, String password) {
+        try (Connection connection = DriverManager.getConnection(URL);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM usuarios WHERE username = ? AND password = ?")) {
 
-        System.out.println("Servidor iniciado en el puerto " + PUERTO);
+            statement.setString(1, username);
+            statement.setString(2, password);
 
-        while (true) {
-            Socket cliente = servidor.accept();
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
-            System.out.println("Cliente conectado");
+    public static void main(String[] args) {
+        final int puerto = 12345;
 
-            HiloCliente hilo = new HiloCliente(cliente);
-            hilo.start();
+        try (ServerSocket serverSocket = new ServerSocket(puerto)) {
+            System.out.println("Servidor esperando conexiones en el puerto " + puerto);
+
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Cliente conectado desde " + clientSocket.getInetAddress().getHostAddress());
+
+                new Thread(() -> handleClient(clientSocket)).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void handleClient(Socket clientSocket) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+             PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
+
+            String username = reader.readLine();
+            String password = reader.readLine();
+
+            boolean loginExitoso = verificarLogin(username, password);
+
+            writer.println(loginExitoso ? "OK" : "ERROR");
+            writer.println();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
+
