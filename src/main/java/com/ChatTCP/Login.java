@@ -8,12 +8,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class Login extends JFrame {
+    private final String host = "localhost";
+    private final int puerto = 12345;
     private JTextField textField1;
     private JPanel panel1;
     private JPasswordField passwordField1;
     private JButton enviarButton;
-    private final String host = "localhost";
-    private final int puerto = 12345;
 
     public Login() {
         setTitle("Chat");

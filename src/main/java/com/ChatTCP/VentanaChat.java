@@ -16,18 +16,15 @@ import java.net.MulticastSocket;
 
 public class VentanaChat extends JFrame {
 
+    private static final int PUERTO = 12345;
+    private static MulticastSocket socket;
     private JButton BotonEnviar;
     private JScrollPane PanelMensajes;
     private JPanel PanelPrincipal;
     private JTextField textField1;
     private JPanel Mensajes;
-    private static MulticastSocket socket;
-    private static String nombre;
-
-    private static final int PUERTO = 12345;
 
     public VentanaChat(String nombre) {
-        VentanaChat.nombre = nombre;
 
         setTitle("Chat");
         setContentPane(PanelPrincipal);
@@ -70,9 +67,7 @@ public class VentanaChat extends JFrame {
             public void windowClosing(WindowEvent e) {
                 try {
                     String mensaje = String.format("%S ACABA DE ABANDONAR EL CHAT", nombre);
-                    DatagramPacket dp = new DatagramPacket(mensaje.getBytes(), mensaje.length(),
-                            InetAddress.getByName("225.0.0.1"), PUERTO);
-                    socket.send(dp);
+                    enviarMensaje(mensaje, socket);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -84,9 +79,7 @@ public class VentanaChat extends JFrame {
             InetAddress grupo = InetAddress.getByName("225.0.0.1");
             socket.joinGroup(grupo);
             String mensaje = String.format("%S ACABA DE UNIRSE AL CHAT", nombre);
-            DatagramPacket dp = new DatagramPacket(mensaje.getBytes(), mensaje.length(),
-                    InetAddress.getByName("225.0.0.1"), PUERTO);
-            socket.send(dp);
+            enviarMensaje(mensaje, socket);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -107,6 +100,12 @@ public class VentanaChat extends JFrame {
         }).start();
     }
 
+    public static void enviarMensaje(@NotNull String mensaje, @NotNull MulticastSocket socket) throws IOException {
+        DatagramPacket dp = new DatagramPacket(mensaje.getBytes(), mensaje.length(),
+                InetAddress.getByName("225.0.0.1"), PUERTO);
+        socket.send(dp);
+    }
+
     public void anadirMensaje(String mensaje) {
         JLabel label = new JLabel(mensaje.trim());
 
@@ -125,12 +124,6 @@ public class VentanaChat extends JFrame {
         Mensajes.add(label);
         PanelMensajes.setViewportView(Mensajes);
         PanelMensajes.getVerticalScrollBar().setValue(PanelMensajes.getVerticalScrollBar().getMaximum());
-    }
-
-    public static void enviarMensaje(@NotNull String mensaje, @NotNull MulticastSocket socket) throws IOException {
-        DatagramPacket dp = new DatagramPacket(mensaje.getBytes(), mensaje.length(),
-                InetAddress.getByName("225.0.0.1"), PUERTO);
-        socket.send(dp);
     }
 
 }
