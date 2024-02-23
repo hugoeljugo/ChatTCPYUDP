@@ -9,9 +9,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.Socket;
 
 public class VentanaChat extends JFrame {
@@ -66,8 +63,7 @@ public class VentanaChat extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 try {
-                    String mensaje = "%S ACABA DE ABANDONAR EL CHAT";
-                    enviarMensaje(mensaje, socket);
+                    socket.close();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -89,9 +85,7 @@ public class VentanaChat extends JFrame {
                     while ((texto = in.readLine()) != null) {
                         anadirMensaje(texto);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                } catch (IOException ignored) {}
             }
         }).start();
     }
