@@ -1,4 +1,4 @@
-package com.ChatTCP;
+package com.shared;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
