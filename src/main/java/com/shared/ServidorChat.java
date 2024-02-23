@@ -40,14 +40,14 @@ public class ServidorChat {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Cliente conectado desde " + clientSocket.getInetAddress().getHostAddress());
 
-                new Thread(() -> handleClient(clientSocket)).start();
+                new Thread(() -> manejarCliente(clientSocket)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void handleClient(Socket clientSocket) {
+    private static void manejarCliente(Socket clientSocket) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
 

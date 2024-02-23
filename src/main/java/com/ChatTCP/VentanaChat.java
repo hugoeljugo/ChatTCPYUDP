@@ -8,16 +8,16 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.Socket;
 
 public class VentanaChat extends JFrame {
 
-    private static final int PUERTO = 12345;
-    private static MulticastSocket socket;
+    private static final int PUERTO = 54321;
+    private static Socket socket;
     private JButton BotonEnviar;
     private JScrollPane PanelMensajes;
     private JPanel PanelPrincipal;
@@ -34,7 +34,7 @@ public class VentanaChat extends JFrame {
         setVisible(true);
 
         BotonEnviar.addActionListener(e -> {
-            String mensaje = String.format("%S: %s", nombre, textField1.getText());
+            String mensaje = textField1.getText();
             if (!mensaje.isBlank()) {
                 try {
                     enviarMensaje(mensaje, socket);
@@ -49,7 +49,7 @@ public class VentanaChat extends JFrame {
             public void keyPressed(KeyEvent e) {
                 super.keyPressed(e);
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    String mensaje = String.format("%S: %s", nombre, textField1.getText());
+                    String mensaje = textField1.getText();
                     if (!mensaje.isBlank()) {
                         try {
                             enviarMensaje(mensaje, socket);
@@ -66,7 +66,7 @@ public class VentanaChat extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 try {
-                    String mensaje = String.format("%S ACABA DE ABANDONAR EL CHAT", nombre);
+                    String mensaje = "%S ACABA DE ABANDONAR EL CHAT";
                     enviarMensaje(mensaje, socket);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -75,11 +75,8 @@ public class VentanaChat extends JFrame {
         });
 
         try {
-            socket = new MulticastSocket(PUERTO);
-            InetAddress grupo = InetAddress.getByName("225.0.0.1");
-            socket.joinGroup(grupo);
-            String mensaje = String.format("%S ACABA DE UNIRSE AL CHAT", nombre);
-            enviarMensaje(mensaje, socket);
+            socket = new Socket("localhost", PUERTO);
+            enviarMensaje(nombre, socket);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -87,12 +84,11 @@ public class VentanaChat extends JFrame {
         new Thread(() -> {
             while (true) {
                 try {
-                    byte[] buffer = new byte[1024];
-                    DatagramPacket entrada = new DatagramPacket(buffer, buffer.length);
-                    socket.receive(entrada);
-
-                    String texto = new String(entrada.getData());
-                    anadirMensaje(texto);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    String texto;
+                    while ((texto = in.readLine()) != null) {
+                        anadirMensaje(texto);
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -100,10 +96,9 @@ public class VentanaChat extends JFrame {
         }).start();
     }
 
-    public static void enviarMensaje(@NotNull String mensaje, @NotNull MulticastSocket socket) throws IOException {
-        DatagramPacket dp = new DatagramPacket(mensaje.getBytes(), mensaje.length(),
-                InetAddress.getByName("225.0.0.1"), PUERTO);
-        socket.send(dp);
+    public static void enviarMensaje(@NotNull String mensaje, @NotNull Socket socket) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        out.println(mensaje);
     }
 
     public void anadirMensaje(String mensaje) {
